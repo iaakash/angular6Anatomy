@@ -1,5 +1,6 @@
 import { Component, OnInit, ChangeDetectionStrategy, Input, ChangeDetectorRef } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-counter',
@@ -10,7 +11,9 @@ import { Observable } from 'rxjs';
 export class CounterComponent implements OnInit {
   
   @Input() data: any;
-  @Input() count:Observable<any>;
+  @Input() count$:Observable<any>;
+  private ngUnsubscribe = new Subject();
+
   localCount:number = 0;
 
   value:number;
@@ -20,7 +23,10 @@ export class CounterComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    this.count.subscribe(value => {
+    this.count$.pipe(
+      takeUntil(this.ngUnsubscribe)
+    )
+    .subscribe(value => {
       console.log(value);
       this.value = value.counter;
       //this.cd.markForCheck();
@@ -30,6 +36,11 @@ export class CounterComponent implements OnInit {
         this.cd.detectChanges();
       }, 2000);
     })
+  }
+
+  ngOnDestroy() {
+    this.ngUnsubscribe.next();
+    this.ngUnsubscribe.complete();
   }
 
 }
